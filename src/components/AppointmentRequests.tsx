@@ -37,9 +37,20 @@ export default function AppointmentRequests() {
     try {
       const response = await fetch('/api/appointment-requests');
       const data = await response.json();
-      setRequests(data);
+      
+      // Check if data is an array (success) or has error property (failure)
+      if (Array.isArray(data)) {
+        setRequests(data);
+      } else if (data.error) {
+        console.error('API Error:', data.error);
+        setRequests([]); // Set empty array on error
+      } else {
+        console.error('Unexpected response format:', data);
+        setRequests([]);
+      }
     } catch (error) {
       console.error('Errore nel caricamento delle richieste:', error);
+      setRequests([]); // Set empty array on network error
     } finally {
       setLoading(false);
     }

@@ -457,14 +457,19 @@ export async function deleteProduct(id: number) {
 // RICHIESTE APPUNTAMENTI DAL SITO WEB
 export async function getAppointmentRequests() {
   try {
+    console.log('Getting Google Sheets service...');
     const sheets = await getGoogleSheetsService();
+    console.log('Google Sheets service obtained, fetching data...');
+    
     const response = await sheets.spreadsheets.values.get({
       spreadsheetId: SPREADSHEET_ID,
       range: 'Richieste!A2:L', // Skip header row
     });
 
+    console.log('Google Sheets response received:', response.data.values?.length || 0, 'rows');
     const rows = response.data.values || [];
-    return rows.map((row, index) => ({
+    
+    const mappedData = rows.map((row, index) => ({
       id: index + 1,
       nome: row[0] || '',
       cognome: row[1] || '',
@@ -478,9 +483,27 @@ export async function getAppointmentRequests() {
       origine: row[9] || '',
       data_richiesta: row[10] || ''
     }));
+    
+    console.log('Data mapped successfully:', mappedData.length, 'requests');
+    return mappedData;
   } catch (error) {
-    console.error('Error fetching appointment requests from Google Sheets:', error);
-    throw new Error('Errore nel recupero delle richieste appuntamenti');
+    console.error('Error in getAppointmentRequests:', error);
+    
+    if (error instanceof Error) {
+      console.error('Error message:', error.message);
+      console.error('Error stack:', error.stack);
+      
+      // Check for specific Google Sheets API errors
+      if (error.message.includes('invalid_grant')) {
+        throw new Error('Google Sheets authentication failed - invalid credentials');
+      } else if (error.message.includes('permission')) {
+        throw new Error('Google Sheets access denied - check permissions');
+      } else if (error.message.includes('not found')) {
+        throw new Error('Google Sheets spreadsheet not found');
+      }
+    }
+    
+    throw error;
   }
 }
 

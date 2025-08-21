@@ -81,17 +81,38 @@ export async function POST(request: NextRequest) {
 // GET - Ottieni tutte le richieste in sospeso
 export async function GET() {
   try {
+    console.log('GET /api/appointment-requests called');
+    console.log('USE_GOOGLE_SHEETS:', USE_GOOGLE_SHEETS);
+    console.log('Environment check - GOOGLE_SHEETS_PRIVATE_KEY exists:', !!process.env.GOOGLE_SHEETS_PRIVATE_KEY);
+    console.log('Environment check - GOOGLE_SHEETS_CLIENT_EMAIL exists:', !!process.env.GOOGLE_SHEETS_CLIENT_EMAIL);
+    console.log('Environment check - GOOGLE_SHEETS_SPREADSHEET_ID exists:', !!process.env.GOOGLE_SHEETS_SPREADSHEET_ID);
+
     if (USE_GOOGLE_SHEETS) {
+      console.log('Attempting to fetch from Google Sheets...');
       const requests = await googleSheets.getAppointmentRequests();
+      console.log('Google Sheets response:', requests.length, 'requests found');
       return NextResponse.json(requests);
     } else {
+      console.log('Using SQLite fallback...');
       const requests = await allQuery(
         'SELECT * FROM appointment_requests WHERE stato = "DA_CONFERMARE" ORDER BY data_richiesta DESC'
       );
+      console.log('SQLite response:', requests.length, 'requests found');
       return NextResponse.json(requests);
     }
   } catch (error) {
     console.error('Error fetching appointment requests:', error);
-    return NextResponse.json({ error: 'Failed to fetch requests' }, { status: 500 });
+    console.error('Error stack:', error instanceof Error ? error.stack : 'No stack trace');
+    
+    // Return detailed error info in development
+    const isDev = process.env.NODE_ENV === 'development';
+    
+    return NextResponse.json({ 
+      error: 'Failed to fetch requests',
+      ...(isDev && { 
+        details: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
+      })
+    }, { status: 500 });
   }
 }
