@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🌸 Gresilda Hairstyle - Richiedi Appuntamento</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 50%, #fecfef 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            opacity: 0.9;
+            font-size: 1.1em;
+        }
+        
+        .form-container {
+            padding: 40px;
+        }
+        
+        .form-group {
+            margin-bottom: 25px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+            font-size: 1.1em;
+        }
+        
+        .required {
+            color: #e74c3c;
+        }
+        
+        input, select, textarea {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e1e8ed;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+        
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        
+        textarea {
+            height: 100px;
+            resize: vertical;
+        }
+        
+        .submit-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 18px 40px;
+            border: none;
+            border-radius: 50px;
+            font-size: 1.2em;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        
+        .submit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+        
+        .submit-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .loading {
+            display: none;
+            text-align: center;
+            margin: 20px 0;
+        }
+        
+        .success, .error {
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+            display: none;
+        }
+        
+        .success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        
+        @media (max-width: 768px) {
+            .grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .header h1 {
+                font-size: 2em;
+            }
+            
+            .form-container {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🌸 Gresilda Hairstyle</h1>
+            <p>Richiedi il tuo appuntamento online</p>
+        </div>
+        
+        <div class="form-container">
+            <form id="appointment-form">
+                <div class="grid">
+                    <div class="form-group">
+                        <label for="nome">Nome <span class="required">*</span></label>
+                        <input type="text" id="nome" name="nome" required placeholder="Il tuo nome">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="cognome">Cognome</label>
+                        <input type="text" id="cognome" name="cognome" placeholder="Il tuo cognome">
+                    </div>
+                </div>
+                
+                <div class="grid">
+                    <div class="form-group">
+                        <label for="telefono">Telefono <span class="required">*</span></label>
+                        <input type="tel" id="telefono" name="telefono" required placeholder="+39 123 456 7890">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="email">Email</label>
+                        <input type="email" id="email" name="email" placeholder="tua@email.com">
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="servizio">Servizio Richiesto <span class="required">*</span></label>
+                    <select id="servizio" name="servizio" required>
+                        <option value="">Scegli il servizio...</option>
+                        <option value="Taglio">Taglio</option>
+                        <option value="Piega">Piega</option>
+                        <option value="Taglio e Piega">Taglio e Piega</option>
+                        <option value="Colore">Colore</option>
+                        <option value="Meches">Meches</option>
+                        <option value="Trattamento">Trattamento</option>
+                        <option value="Trattamento + Piega">Trattamento + Piega</option>
+                        <option value="Colore + Taglio">Colore + Taglio</option>
+                        <option value="Styling Evento">Styling per Evento</option>
+                    </select>
+                </div>
+                
+                <div class="grid">
+                    <div class="form-group">
+                        <label for="data_preferita">Data Preferita <span class="required">*</span></label>
+                        <input type="date" id="data_preferita" name="data_preferita" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="ora_preferita">Ora Preferita</label>
+                        <input type="time" id="ora_preferita" name="ora_preferita">
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="note">Note Aggiuntive</label>
+                    <textarea id="note" name="note" placeholder="Scrivi qui eventuali richieste speciali, allergie, preferenze..."></textarea>
+                </div>
+                
+                <div class="loading">
+                    <p>⏳ Invio della richiesta in corso...</p>
+                </div>
+                
+                <div class="success">
+                    <strong>✅ Richiesta inviata con successo!</strong><br>
+                    Ti contatteremo presto per confermare l'appuntamento.
+                </div>
+                
+                <div class="error">
+                    <strong>❌ Errore nell'invio della richiesta</strong><br>
+                    <span class="error-message">Riprova più tardi o chiamaci direttamente.</span>
+                </div>
+                
+                <button type="submit" class="submit-btn">
+                    🌸 Richiedi Appuntamento
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Imposta data minima a domani
+        const tomorrow = new Date();
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        document.getElementById('data_preferita').min = tomorrow.toISOString().split('T')[0];
+
+        document.getElementById('appointment-form').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const submitBtn = this.querySelector('.submit-btn');
+            const loading = this.querySelector('.loading');
+            const successDiv = this.querySelector('.success');
+            const errorDiv = this.querySelector('.error');
+            
+            // Reset stati
+            successDiv.style.display = 'none';
+            errorDiv.style.display = 'none';
+            loading.style.display = 'block';
+            submitBtn.disabled = true;
+            submitBtn.textContent = '⏳ Invio in corso...';
+            
+            try {
+                const formData = new FormData(this);
+                const data = Object.fromEntries(formData.entries());
+                
+                // Rimuovi campi vuoti opzionali
+                Object.keys(data).forEach(key => {
+                    if (data[key] === '') {
+                        delete data[key];
+                    }
+                });
+                
+                console.log('Invio dati:', data);
+                
+                const response = await fetch('http://localhost:3000/api/appointment-requests', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(data)
+                });
+                
+                const result = await response.json();
+                
+                loading.style.display = 'none';
+                
+                if (response.ok) {
+                    successDiv.style.display = 'block';
+                    this.reset();
+                    
+                    // Scroll al messaggio di successo
+                    successDiv.scrollIntoView({ behavior: 'smooth' });
+                    
+                    // Ripristina il pulsante dopo qualche secondo
+                    setTimeout(() => {
+                        submitBtn.disabled = false;
+                        submitBtn.textContent = '🌸 Richiedi Appuntamento';
+                    }, 3000);
+                    
+                } else {
+                    throw new Error(result.error || 'Errore sconosciuto');
+                }
+                
+            } catch (error) {
+                console.error('Errore:', error);
+                loading.style.display = 'none';
+                errorDiv.style.display = 'block';
+                errorDiv.querySelector('.error-message').textContent = error.message;
+                
+                // Ripristina il pulsante
+                submitBtn.disabled = false;
+                submitBtn.textContent = '🌸 Richiedi Appuntamento';
+                
+                // Scroll al messaggio di errore
+                errorDiv.scrollIntoView({ behavior: 'smooth' });
+            }
+        });
+        
+        // Validazione telefono in tempo reale
+        document.getElementById('telefono').addEventListener('input', function(e) {
+            let value = e.target.value.replace(/\D/g, '');
+            if (value.length > 0) {
+                // Formato italiano automatico
+                if (value.startsWith('39')) {
+                    value = '+' + value.slice(0, 2) + ' ' + value.slice(2, 5) + '-' + value.slice(5, 8) + '-' + value.slice(8, 12);
+                } else if (value.startsWith('3')) {
+                    value = '+39 ' + value.slice(0, 3) + '-' + value.slice(3, 6) + '-' + value.slice(6, 10);
+                }
+            }
+            e.target.value = value;
+        });
+    </script>
+</body>
+</html>
