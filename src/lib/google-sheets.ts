@@ -220,6 +220,16 @@ export async function getAppointments(startDate?: string, endDate?: string) {
   }
 }
 
+function ensureLocalDateString(date: string | Date | number | undefined | null): string {
+  if (typeof date === 'string') return date;
+  if (date instanceof Date) {
+    const pad = (n: number) => n.toString().padStart(2, '0');
+    date.setHours(0, 0, 0, 0);
+    return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
+  }
+  return String(date);
+}
+
 export async function addAppointment(appointmentData: AppointmentData) {
   try {
     const sheets = await getGoogleSheetsService();
@@ -241,7 +251,7 @@ export async function addAppointment(appointmentData: AppointmentData) {
       appointmentData.customer_id || '',
       appointmentData.customer_name || customerName,
       appointmentData.phone || customerPhone,
-      appointmentData.date,
+      ensureLocalDateString(appointmentData.date),
       appointmentData.time,
       appointmentData.service,
       appointmentData.duration || 60,
@@ -284,7 +294,7 @@ export async function updateAppointment(id: number, appointmentData: Appointment
       appointmentData.customer_id || '',
       customerName,
       customerPhone,
-      appointmentData.date,
+  ensureLocalDateString(appointmentData.date),
       appointmentData.time,
       appointmentData.service,
       appointmentData.duration || 60,

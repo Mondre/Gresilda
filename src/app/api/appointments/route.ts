@@ -13,25 +13,36 @@ export async function GET(request: NextRequest) {
     const startDate = searchParams.get('startDate');
     const endDate = searchParams.get('endDate');
     const customerPhone = searchParams.get('customerPhone');
+    const date = searchParams.get('date');
+    const month = searchParams.get('month');
     
     // Usa Google Sheets se configurato, altrimenti SQLite
     if (USE_GOOGLE_SHEETS) {
-      const appointments = await googleSheets.getAppointments(startDate || undefined, endDate || undefined);
-      
+      let appointments = await googleSheets.getAppointments(startDate || undefined, endDate || undefined);
+
+      // Filtri lato server per ridurre i dati
+      if (date) {
+        appointments = appointments.filter(apt => apt.date === date);
+      } else if (month) {
+        appointments = appointments.filter(apt => apt.date?.startsWith(month));
+      } else if (startDate && endDate) {
+        appointments = appointments.filter(apt => apt.date >= startDate && apt.date <= endDate);
+      } else if (startDate) {
+        appointments = appointments.filter(apt => apt.date >= startDate);
+      } else if (endDate) {
+        appointments = appointments.filter(apt => apt.date <= endDate);
+      }
+
       // Filtra per telefono cliente se specificato
       if (customerPhone) {
-        const filteredAppointments = appointments.filter(apt => 
-          apt.phone === customerPhone
-        );
-        return NextResponse.json(filteredAppointments);
+        appointments = appointments.filter(apt => apt.phone === customerPhone);
       }
       
       return NextResponse.json(appointments);
     }
     
     // Fallback a SQLite (codice esistente)
-    const date = searchParams.get('date');
-    const month = searchParams.get('month');
+    // NOTA: nel percorso SQLite usiamo i parametri date/month definiti sopra
     
     let query = `
       SELECT 

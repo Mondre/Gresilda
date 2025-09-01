@@ -144,15 +144,16 @@ export default function CustomerHistory() {
   );
 
   const formatDate = (dateString: string) => {
-    try {
-      return new Date(dateString).toLocaleDateString('it-IT', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric'
-      });
-    } catch {
-      return dateString;
-    }
+    if (!dateString) return '';
+    // Evita il parsing UTC: formatta direttamente la stringa YYYY-MM-DD
+    const [y, m, d] = dateString.split('-');
+    if (!y || !m || !d) return dateString;
+    const date = new Date(parseInt(y, 10), parseInt(m, 10) - 1, parseInt(d, 10));
+    return date.toLocaleDateString('it-IT', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
   };
 
   const getStatusIcon = (status: string) => {

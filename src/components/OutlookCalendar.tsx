@@ -31,6 +31,19 @@ interface CalendarDay {
 }
 
 function OutlookCalendar() {
+  // Funzione per data locale YYYY-MM-DD
+  const getLocalDateString = (date: Date) => {
+    // Imposta sempre l'orario a mezzanotte locale per evitare problemi di timezone
+    const localDate = new Date(date);
+    localDate.setHours(0, 0, 0, 0);
+    const pad = (n: number) => n.toString().padStart(2, '0');
+    return `${localDate.getFullYear()}-${pad(localDate.getMonth() + 1)}-${pad(localDate.getDate())}`;
+  }
+  // Parse 'YYYY-MM-DD' as local date (avoid UTC parsing)
+  const parseLocalDateString = (dateStr: string) => {
+    const [y, m, d] = dateStr.split('-').map((n) => parseInt(n, 10));
+    return new Date(y, (m || 1) - 1, d || 1);
+  }
   const [currentDate, setCurrentDate] = useState(new Date());
   const [view, setView] = useState<'month' | 'week' | 'day'>('month');
   const [appointments, setAppointments] = useState<Appointment[]>([]);
@@ -63,8 +76,19 @@ function OutlookCalendar() {
           const year = currentDate.getFullYear();
           const month = String(currentDate.getMonth() + 1).padStart(2, '0');
           url = `/api/appointments?month=${year}-${month}`;
-        } else if (view === 'week' || view === 'day') {
-          const dateString = currentDate.toISOString().split('T')[0];
+        } else if (view === 'week') {
+          const startOfWeek = new Date(currentDate);
+          const dayOfWeek = startOfWeek.getDay() === 0 ? 7 : startOfWeek.getDay();
+          startOfWeek.setDate(startOfWeek.getDate() - (dayOfWeek - 1));
+          startOfWeek.setHours(0, 0, 0, 0);
+          const endOfWeek = new Date(startOfWeek);
+          endOfWeek.setDate(startOfWeek.getDate() + 6);
+          endOfWeek.setHours(0, 0, 0, 0);
+          const startDateString = getLocalDateString(startOfWeek);
+          const endDateString = getLocalDateString(endOfWeek);
+          url = `/api/appointments?startDate=${startDateString}&endDate=${endDateString}`;
+        } else if (view === 'day') {
+          const dateString = getLocalDateString(currentDate);
           url = `/api/appointments?date=${dateString}`;
         }
 
@@ -101,30 +125,23 @@ function OutlookCalendar() {
     if (view === 'month') {
       const year = currentDate.getFullYear();
       const month = currentDate.getMonth();
-      
       const firstDay = new Date(year, month, 1);
       const lastDay = new Date(year, month + 1, 0);
-      
       const startDate = new Date(firstDay);
       const firstDayOfWeek = firstDay.getDay() === 0 ? 7 : firstDay.getDay();
       startDate.setDate(firstDay.getDate() - (firstDayOfWeek - 1));
-      
       const endDate = new Date(lastDay);
       const lastDayOfWeek = lastDay.getDay() === 0 ? 7 : lastDay.getDay();
       endDate.setDate(lastDay.getDate() + (7 - lastDayOfWeek));
-      
       const days: CalendarDay[] = [];
-      
       for (let date = new Date(startDate); date <= endDate; date.setDate(date.getDate() + 1)) {
         const dayDate = new Date(date);
         dayDate.setHours(0, 0, 0, 0);
-        
         const dayAppointments = appointments.filter(apt => {
-          const aptDate = new Date(apt.date);
+          const aptDate = parseLocalDateString(apt.date);
           aptDate.setHours(0, 0, 0, 0);
           return aptDate.getTime() === dayDate.getTime();
         });
-        
         days.push({
           date: new Date(dayDate),
           isCurrentMonth: dayDate.getMonth() === month,
@@ -132,26 +149,21 @@ function OutlookCalendar() {
           appointments: dayAppointments
         });
       }
-      
       return days;
     } else if (view === 'week') {
       const days: CalendarDay[] = [];
-      
       const startOfWeek = new Date(currentDate);
       const dayOfWeek = startOfWeek.getDay() === 0 ? 7 : startOfWeek.getDay();
       startOfWeek.setDate(startOfWeek.getDate() - (dayOfWeek - 1));
-      
       for (let i = 0; i < 7; i++) {
         const dayDate = new Date(startOfWeek);
         dayDate.setDate(startOfWeek.getDate() + i);
         dayDate.setHours(0, 0, 0, 0);
-        
         const dayAppointments = appointments.filter(apt => {
-          const aptDate = new Date(apt.date);
+          const aptDate = parseLocalDateString(apt.date);
           aptDate.setHours(0, 0, 0, 0);
           return aptDate.getTime() === dayDate.getTime();
         });
-        
         days.push({
           date: new Date(dayDate),
           isCurrentMonth: true,
@@ -159,18 +171,15 @@ function OutlookCalendar() {
           appointments: dayAppointments
         });
       }
-      
       return days;
     } else {
       const dayDate = new Date(currentDate);
       dayDate.setHours(0, 0, 0, 0);
-      
       const dayAppointments = appointments.filter(apt => {
-        const aptDate = new Date(apt.date);
+        const aptDate = parseLocalDateString(apt.date);
         aptDate.setHours(0, 0, 0, 0);
         return aptDate.getTime() === dayDate.getTime();
       });
-      
       return [{
         date: new Date(dayDate),
         isCurrentMonth: true,
@@ -234,7 +243,13 @@ function OutlookCalendar() {
   };
 
   const handleDayClick = (date: Date) => {
-    const dateString = date.toISOString().split('T')[0];
+    // Compat legacy: calcola e passa stringa locale
+    const dateString = getLocalDateString(date);
+    handleDayClickStr(dateString);
+  };
+
+  const handleDayClickStr = (dateString: string) => {
+    // Usa direttamente la stringa YYYY-MM-DD per evitare ogni conversione
     setSelectedDate(dateString);
     setFormData(prev => ({ ...prev, date: dateString }));
     setShowForm(true);
@@ -273,7 +288,7 @@ function OutlookCalendar() {
           // Per nuovo appuntamento, ricarica i dati
           const refreshUrl = view === 'month' 
             ? `/api/appointments?month=${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}`
-            : `/api/appointments?date=${currentDate.toISOString().split('T')[0]}`;
+            : `/api/appointments?date=${getLocalDateString(currentDate)}`;
           
           const refreshResponse = await fetch(refreshUrl);
           if (refreshResponse.ok) {
@@ -327,7 +342,7 @@ function OutlookCalendar() {
     if (!appointment.id) return;
     
     const confirmed = window.confirm(
-      `Sei sicuro di voler eliminare l'appuntamento di ${appointment.customer_name} del ${new Date(appointment.date).toLocaleDateString('it-IT')} alle ${appointment.time}?`
+      `Sei sicuro di voler eliminare l'appuntamento di ${appointment.customer_name} del ${appointment.date.split('-').reverse().join('/')} alle ${appointment.time}?`
     );
     
     if (!confirmed) return;
@@ -643,9 +658,11 @@ function OutlookCalendar() {
           <div className="flex items-center justify-between">
             <button
               onClick={() => navigateDate('prev')}
-              className="p-2 text-gray-600 hover:text-pink-600 hover:bg-pink-50 rounded-md transition-colors"
+              className="p-2 text-gray-600 hover:text-pink-600 hover:bg-pink-50 rounded-md transition-colors flex items-center gap-1"
+              aria-label="Indietro"
             >
               <ChevronLeft className="w-6 h-6" />
+              <span className="ml-1 text-sm font-medium">Indietro</span>
             </button>
             
             <h2 className="text-2xl font-bold text-gray-900">
@@ -698,15 +715,26 @@ function OutlookCalendar() {
               {editingAppointment ? 'Modifica Appuntamento' : 'Nuovo Appuntamento'}
             </h2>
             <p className="text-sm text-gray-600 mb-4">
-              Data selezionata: {selectedDate && new Date(selectedDate).toLocaleDateString('it-IT', {
-                weekday: 'long',
-                day: 'numeric',
-                month: 'long',
-                year: 'numeric'
-              })}
+              Data selezionata: {selectedDate && selectedDate.split('-').reverse().join('/')}
             </p>
             
             <form onSubmit={handleSubmit} className="space-y-4">
+              {/* Data appuntamento */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Data</label>
+                <input
+                  type="date"
+                  value={formData.date}
+                  onChange={(e) => {
+                    const v = e.target.value;
+                    setFormData({ ...formData, date: v });
+                    setSelectedDate(v);
+                  }}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-pink-500"
+                  required
+                />
+              </div>
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Cliente</label>
                 <select
